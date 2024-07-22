@@ -21,6 +21,7 @@ You can access the data from the Capital Bikeshare web site. Doing this requires
 
 ```{r}
 library(tidyverse)
+library(ggplot2)
 
 station_url <- "https://mdbeckman.github.io/dcSupplement/data/DC-Stations.csv"
 Stations <- readr::read_csv(station_url)
@@ -68,9 +69,15 @@ When you make your plot, you will likely find that the axis range is being set b
 
 
 ```{r}
-### Your code here
+tripData <- Trips |>
+  group_by(client) |>
+  mutate(durationMinutes = as.numeric(edate - sdate)) |>
+  select(client, durationMinutes)
 
-
+tripData |>
+  ggplot() +
+  geom_boxplot(mapping = aes(x = client, y = durationMinutes, ))
+  
 ```
 
 
