@@ -83,7 +83,6 @@ tripData |>
   
 ```
 
-
 ## Question 2: When are bikes used?
 
 The `sdate` variable in Trips indicates the date and time of day that the bicycle was checked out of the parking station. `sdate` is stored as a special variable type that includes detailed information about the date and time. 
@@ -176,12 +175,20 @@ This is quite interesting. Unlike the minutes graph, where we can easily pick ou
 Group the bike rentals by three variables: hour of the day, day of the week, and client type. Find the total number of events in each grouping and plot this count versus hour. Use the group aesthetic to represent one of the other variables and faceting to represent the other. Comment on any general trends you see.
 
 ```{r}
-### My Code here
+summaryData <- Trips |>
+  mutate(hourOfDay = lubridate::hour(sdate), dayOfWeek = lubridate::wday(sdate)) |>
+  group_by(hourOfDay, dayOfWeek, client) |>
+  summarize(count = n())
 
+summaryData
+```
+```{r}
+ggplot(summaryData, mapping = aes(x = hourOfDay, y = count, color = client, group = client)) +
+  geom_line() +
+  facet_wrap(~ dayOfWeek)
 ```
 
-My comments here.....
-
+In all accounts, it looks like "registered" users see much more activity than casual users. The trends that indicated that users were using the platform to commute is more pronounced in registered users, suggesting that those who use the service to commute are also likely those who are incentivized to register with the service.
 
 ## Question 4: How Far? 
 
@@ -209,6 +216,10 @@ Simple2 <-
 ```
 
 Look at the `head()` of `Simple` and `Simple2` and make sure you understand how they are related to `Stations.`
+
+```{r}
+head(Simple2)
+```
 
 
 The joining of `Simple` and `Simple2` should match every station to every other station. Since a ride can start and end at the same station, it also makes sense to match each station to itself. This sort of matching does not make use of any matching variables; everything is matched to everything else. This is called a **full outer join**. See Lecture L09 to read more about joins. Note, we can also use the `merge()` function for full outer joins. See the help file for more details.  
@@ -240,10 +251,21 @@ Our goal here is to recreate [Figure 18.5](https://dtkaplan.github.io/DataComput
 
 ```{r}
 ### My code here
+joinedData <- Trips |>
+  inner_join(PairDistances, by = c("sstation", "estation"))
 
+ggplot(joinedData) +
+  geom_density(mapping = aes(x = distance))
 ```
 
-
+```{r}
+joinedData |>
+  mutate(duration = as.numeric(edate - sdate)) |>
+  filter(duration < 10000) |>
+  ggplot() +
+  geom_density(mapping = aes(x = as.numeric(edate - sdate))) +
+  xlab("duration")
+```
 
 
 #### Extra Credit: Joining and Variable Names in R
@@ -254,5 +276,24 @@ Optional Extra credit answer here.....
 
 
 
+```{r}
+Stations
+```
 
+```{r}
+Trips
+```
 
+```{r}
+Simple
+```
+
+```{r}
+Simple2
+```
+
+```{r}
+StationPairs
+```
+
+Based on the usage, we can conclude that the reason Simple and Simple2 were given different variable names for the station is to transform our data to work with the `haversine` distance function. 
