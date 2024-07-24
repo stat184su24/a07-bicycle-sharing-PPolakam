@@ -22,6 +22,7 @@ You can access the data from the Capital Bikeshare web site. Doing this requires
 ```{r}
 library(tidyverse)
 library(ggplot2)
+library(lubridate)
 
 station_url <- "https://mdbeckman.github.io/dcSupplement/data/DC-Stations.csv"
 Stations <- readr::read_csv(station_url)
@@ -71,12 +72,14 @@ When you make your plot, you will likely find that the axis range is being set b
 ```{r}
 tripData <- Trips |>
   group_by(client) |>
-  mutate(durationMinutes = as.numeric(edate - sdate)) |>
+  mutate(durationMinutes = as.numeric(edate - sdate) / 60) |>
   select(client, durationMinutes)
 
 tripData |>
+  filter(durationMinutes < 65) |>
   ggplot() +
-  geom_boxplot(mapping = aes(x = client, y = durationMinutes, ))
+  geom_boxplot(mapping = aes(x = client, y = durationMinutes)) +
+  ylab("Duration of Trip (in minutes)")
   
 ```
 
@@ -106,51 +109,67 @@ Create **histograms or density plots** for bike use over the following discrete 
 You can use [Figure 18.3](https://dtkaplan.github.io/DataComputingEbook/project-bicycle-sharing.html#fig:bikes-over-hours) or [Figure 18.4](https://dtkaplan.github.io/DataComputingEbook/project-bicycle-sharing.html#fig:bike-hour-count) as examples.
 
 
+```{r}
+# common setup
+tripData <- Trips |> 
+  select(sdate, edate)
+```
+
 ### Day of Year
 
 ```{r}
-### Your Code Here
-
+tripData |>
+  mutate(sdate = lubridate::yday(sdate)) |>
+  ggplot() +
+  geom_density(mapping = aes(x = sdate), fill = "violet", color = NA) +
+  xlab("Days")
 ```
 
 
-My observations here..... 
+Day of the year appears to be an effective variable to use to visualize the distribution of bike trips taken across the time frame.
 
 
 ### Day of Week
 
 ```{r}
-### Your Code Here
-
+tripData |>
+  mutate(sday = lubridate::wday(sdate)) |>
+  ggplot() +
+  geom_histogram(mapping = aes(x = sday), fill = "navyblue", color = NA) +
+  xlab("Weekday")
 ```
 
 
-My observations here..... 
-
+The produced histogram appears to show that the bikes are most used on the weekdays, with the least ridden days being Saturday and Sunday. Perhaps this is an indicator that several people use this system to commute to and from work.
 
 
 ### Hour of Day
 
 ```{r}
-### Your Code Here
-
+tripData |>
+  mutate(sHour = lubridate::hour(sdate)) |>
+  ggplot() +
+  geom_density(mapping = aes(x = sHour), fill = "gold", color = NA) +
+  xlab("Hours")
 ```
 
 
-My observations here..... 
+Hours is also appears to be a good variable to use with the density plot data representation.You can also clearly see how the fluctuates to reflect the schedule of the city generally, with the most frequent usages being around 8-9 A.M and 5-6 P.M, perhaps further hinting that this system is being used to commute to work.
 
 
 
 ### Minute of Hour
 
 ```{r}
-### Your Code Here
-
+tripData |>
+  mutate(sMinute = lubridate::minute(sdate)) |>
+  ggplot() +
+  geom_density(mapping = aes(x = sMinute), fill = "orange", color = NA) +
+  xlab("minutes")
 ```
 
 
-My observations here..... 
-
+This is quite interesting. Unlike the minutes graph, where we can easily pick out information about the general populace's schedule, there is no such pattern here. We can reason that this system is being used to generally commute to locations of all sorts within the city, given that the trip durations are all over the place with no clear "winner".
 
 ## Question 3: Grouping
 
